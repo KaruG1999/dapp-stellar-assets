@@ -1,12 +1,12 @@
-// src/app/page.jsx
-
 "use client";
 
 import { useState } from "react";
-// Importar nuestros componentes
+import { Asset } from "stellar-sdk";
 import WalletConnect from "../components/WalletConnect";
 import AssetBalance from "../components/AssetBalance";
 import CreateTrustline from "../components/CreateTrustline";
+import PathPayment from "../components/PathPayment";
+import { USDC_TESTNET, XLM } from "../lib/constants";
 
 /**
  * Página Principal de la dApp
@@ -15,23 +15,20 @@ import CreateTrustline from "../components/CreateTrustline";
  */
 export default function Home() {
   // Estado para guardar la public key cuando el usuario conecta
-  const [publicKey, setPublicKey] = useState("");
+  const [publicKey, setPublicKey] = useState<string>("");
 
   // Estado para forzar refresh del balance después de crear trustline
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshKey, setRefreshKey] = useState<number>(0);
 
-  // Configuración del asset USDC en testnet
-  // IMPORTANTE: Este issuer es para TESTNET, no mainnet
-  const USDC_TESTNET = {
-    code: "USDC",
-    issuer: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
-  };
+  // Crear objetos Asset de Stellar SDK
+  const usdcAsset = new Asset(USDC_TESTNET.code, USDC_TESTNET.issuer);
+  const xlmAsset = Asset.native();
 
   /**
    * Callback cuando la wallet se conecta
    * Se pasa al componente WalletConnect
    */
-  const handleWalletConnect = (key) => {
+  const handleWalletConnect = (key: string): void => {
     setPublicKey(key);
     console.log("Wallet connected:", key);
   };
@@ -40,7 +37,7 @@ export default function Home() {
    * Callback cuando la trustline se crea exitosamente
    * Fuerza un refresh del balance
    */
-  const handleTrustlineSuccess = () => {
+  const handleTrustlineSuccess = (): void => {
     // Incrementar refreshKey para forzar re-render de AssetBalance
     setRefreshKey((prev) => prev + 1);
   };
@@ -53,10 +50,10 @@ export default function Home() {
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-6 py-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            🚀 Assets Nativos en Stellar
+            👾​ Assets Nativos en Stellar
           </h1>
           <p className="text-gray-600">
-            Tu primera dApp de stablecoins en blockchain
+            Mi primera dApp de stablecoins en blockchain
           </p>
         </div>
       </div>
@@ -73,8 +70,7 @@ export default function Home() {
             <>
               {/* Componente 2: Crear Trustline */}
               <CreateTrustline
-                assetCode={USDC_TESTNET.code}
-                assetIssuer={USDC_TESTNET.issuer}
+                asset={usdcAsset}
                 onSuccess={handleTrustlineSuccess}
               />
 
@@ -82,9 +78,11 @@ export default function Home() {
               <AssetBalance
                 key={refreshKey} // Force re-mount cuando cambia refreshKey
                 publicKey={publicKey}
-                assetCode={USDC_TESTNET.code}
-                assetIssuer={USDC_TESTNET.issuer}
+                asset={usdcAsset}
               />
+
+              {/* Componente 4: Path Payment (AVANZADO) */}
+              <PathPayment sourceAsset={xlmAsset} destAsset={usdcAsset} />
             </>
           )}
         </div>
@@ -130,6 +128,10 @@ export default function Home() {
             <li>
               <strong>Verifica tu balance</strong> (debería aparecer 0 USDC)
             </li>
+            <li>
+              <strong>(Avanzado) Prueba Path Payment</strong> para convertir XLM
+              a USDC automáticamente
+            </li>
           </ol>
 
           <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
@@ -152,7 +154,6 @@ export default function Home() {
       {/* Footer */}
       <div className="max-w-4xl mx-auto px-6 py-8 text-center text-sm text-gray-500">
         <p>Construido con 💙 por Karu Tiburona Builder</p>
-        <p className="mt-2">Clase 7: Assets Nativos en Stellar</p>
       </div>
     </main>
   );
